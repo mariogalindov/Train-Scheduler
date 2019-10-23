@@ -24,35 +24,60 @@ $( document ).ready(function() {
         var firstTimeFormatted = moment(firstTrainTimeVal, "HH:mm")
         var frequencyVal = $("#frequency").val();
         var time = moment().format("HH:mm");
-        var diffTime = moment().diff(moment(firstTimeFormatted), "minutes");
-        console.log("DIFFERENCE IN TIME: " + diffTime);
-        console.log(time);
-
-        // Time apart (remainder)
-        var tRemainder = diffTime % frequencyVal;
-        console.log(tRemainder);
-
-        var tMinutesTillTrain = frequencyVal - tRemainder;
-        console.log("MINUTES TILL TRAIN: " + tMinutesTillTrain);
-
-        var nextTrain = moment().add(tMinutesTillTrain, "minutes");
-        console.log(nextTrain);
-        nextTrainFormatted = moment(nextTrain).format("hh:mm A");
-        console.log("ARRIVAL TIME: " + moment(nextTrain).format("hh:mm A"));
 
         database.ref("/trainScheduler").push({
             dbTrain: trainNameVal,
             dbDestination: destinationVal,
             dbFrequency: frequencyVal,
-            dbNextArrival: nextTrainFormatted,
-            dbMinutesAway: tMinutesTillTrain,
+            // dbNextArrival: nextTrainFormatted,
+            dbFirstTime: firstTrainTimeVal,
+        });
 
+        $("#trainName").val("");
+        $("#destination").val("");
+        $("#firstTrainTime").val("");
+        $("#frequency").val("");
 
-        })
+    });
 
-        var newRow = $("<tr>");
-        var trainNameRow = $("<th>").text(trainNameVal);
-        console.log(trainNameVal)
+    database.ref("/trainScheduler").on("child_added", function(snapshot){
+        var snap = snapshot.val();
+        var firstTimeFormatted = moment(snap.dbFirstTime, "HH:mm");
+        console.log(firstTimeFormatted);
+        var diffTime = moment().diff(moment(firstTimeFormatted), "minutes");
+        console.log("DIFFERENCE IN TIME: " + diffTime);
 
-    })
+        // Time apart (remainder)
+        var tRemainder = diffTime % snap.dbFrequency;
+        console.log(tRemainder);
+
+        var tMinutesTillTrain = snap.dbFrequency - tRemainder;
+        console.log("MINUTES TILL TRAIN: " + tMinutesTillTrain);
+
+        var nextTrain = moment().add(tMinutesTillTrain, "minutes");
+        console.log(nextTrain);
+        nextTrainFormatted = moment(nextTrain).format("hh:mm A");
+
+        var tName = snap.dbTrain;
+        var tDestination = snap.dbDestination;
+        var tFrequency = snap.dbFrequency;
+        var tNextArrival = nextTrainFormatted;
+        var tMinutesAway = snap.dbMinutesAway;
+
+        var newTR = $("<tr>");
+        var trainTD = $("<th>").text(snapshot.val().dbTrain);
+        var destinationTD =$("<td>").text(tDestination);
+        var frequencyTD = $("<td>").text(tFrequency);
+        var nextArrivalTD = $("<td>").text(tNextArrival);
+        var minutesAwayTD = $("<td>").text(tMinutesTillTrain);
+
+        newTR.append(trainTD);
+        newTR.append(destinationTD);
+        newTR.append(frequencyTD);
+        newTR.append(nextArrivalTD);
+        newTR.append(minutesAwayTD);
+
+        $("tbody").append(newTR);
+
+    });
 });
